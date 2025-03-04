@@ -1,11 +1,9 @@
 
 # SFTP-Mount
 
-A straightforward NixOS module that lets you mount remote directories from an SFTP server. This simple approach ensures your data is always in one central location and seamlessly accessible on any device. For more context, see my blog post: [Home Directory at SFTP Server](https://blog.coditon.com).
+A straightforward NixOS module that lets you mount remote directories from an SFTP server. This simple approach ensures your data is always in one central location and seamlessly accessible on any device. For more context, see my blog post: [Home Directory at SFTP Server](https://blog.coditon.com/content/posts/Home%20Directory%20at%20SFTP%20Server.md).
 
----
-
-## TL;DR
+### TL;DR
 
 Want a single home directory accessible on any device?
 
@@ -13,8 +11,6 @@ Want a single home directory accessible on any device?
 2. **Client Setup**: In your workstation’s `services.sftpMount.mounts`, map that entire home directory to a local mount point, e.g., `/mnt/remote-sftp`.
 3. **Bind Key Folders**: Use the `binds` option to place key folders (e.g., `Pictures`, `Documents`) into your local home directory.
 4. **Mobile Client Setup**: Use a file manager such as [FX File Explorer](https://play.google.com/store/apps/details?id=nextapp.fx) or [Cx File Explorer](https://play.google.com/store/apps/details?id=com.cxinventor.file.explorer) to connect to the SFTP.
-
----
 
 ## Getting Started
 
