@@ -1,20 +1,11 @@
 
 # SFTP-Mount
 
-A straightforward NixOS module that lets you mount remote directories from an SFTP server. This simple approach ensures your data is always in one central location and seamlessly accessible on any device. For more context, see my blog post: [Home Directory at SFTP Server](https://blog.coditon.com/content/posts/Home%20Directory%20at%20SFTP%20Server.md).
-
-### TL;DR
-
-Want a single home directory accessible on any device?
-
-1. **Server Setup**: On your server, create a dedicated SFTP user with chrooted access.
-2. **Client Setup**: In your workstation’s `services.sftpMount.mounts`, map that entire home directory to a local mount point, e.g., `/mnt/remote-sftp`.
-3. **Bind Key Folders**: Use the `binds` option to place key folders (e.g., `Pictures`, `Documents`) into your local home directory.
-4. **Mobile Client Setup**: Use a file manager such as [FX File Explorer](https://play.google.com/store/apps/details?id=nextapp.fx) or [Cx File Explorer](https://play.google.com/store/apps/details?id=com.cxinventor.file.explorer) to connect to the SFTP.
+A couple of straightforward NixOS modules that lets you set up an SFTP server or mount remote directories. This simple approach ensures your data is always in one central location and seamlessly accessible on any device. For more context, see my blog post: [Home Directory at SFTP Server](https://blog.coditon.com/content/posts/Home%20Directory%20at%20SFTP%20Server.md).
 
 ## Getting Started
 
-Add this repository as a Nix flake input, then enable the module in your NixOS configuration:
+Add this repository as a Nix flake input, then enable either the `sftpServer` or `sftpClient` module in your NixOS configuration:
 
 ```nix
 {
@@ -29,30 +20,10 @@ Add this repository as a Nix flake input, then enable the module in your NixOS c
         system = "x86_64-linux";
         modules = [
           ./configuration.nix
-          inputs.sftp-mount.nixosModules.sftpMount
-
-          # Module configuration
+          inputs.sftp-mount.nixosModules.sftpClient
           {
-            services.sftpMount = {
-              enable = true;
-              defaults = {
-                identityFile = "/home/user/.ssh/id_ed25519";
-                port = "22";
-                autoMount = true;
-              };
-              mounts = [
-                {
-                  what = "user@192.168.1.100:/";
-                  where = "/mnt/remote-sftp";
-                }
-              ];
-              binds = [
-                {
-                  what = "/mnt/remote-sftp/home/Pictures";
-                  where = "/home/user/Pictures";
-                }
-              ];
-            };
+            # Module configuration
+            services.sftpClient = { ... };
           }
         ];
       };
@@ -61,20 +32,73 @@ Add this repository as a Nix flake input, then enable the module in your NixOS c
 }
 ```
 
-### Usage
+## SFTP Server Module
 
-1. **Remote SFTP Mounts**
-   Define each remote mount in `services.sftpMount.mounts`. Use `what` (e.g., `user@host:/path`) and `where` (local path). Toggle `autoMount` as needed.
+This module simplifies SFTP server setup on your machine. It configures OpenSSH for SFTP access and creates a dedicated system user and group (sftp:sftp). The strict OpenSSH security settings—combined with the chrooted environment and the removal of the default shell—ensure that the SFTP user is properly isolated and does not have unnecessary access to the system. You can review the configuration at [nixosModules/sftpServer.nix](./nixosModules/sftpServer.nix).
 
-2. **Local Bind Mounts**
-   Reference subfolders on the remote SFTP path in `services.sftpMount.binds`. The module ensures bind mounts occur after the corresponding SFTP mount is available.
+Additionally, I advise disabling the `PasswordAuthentication` and `PermitRootLogin` to further enhance your server's security. Here are [my OpenSSH settings](https://github.com/tupakkatapa/nix-config/blob/4f71e1fcf53b0992a3b1e30c5ec9e11d581f7007/system/openssh.nix).
 
-3. **Manual Mounting**
-   If `autoMount = false`, you can mount and unmount manually. This is useful if SSH keys are not available at boot:
-   ```bash
-   sftp-mount
-   sftp-unmount
-   ```
+### Configuration Options:
+- **`enable`** – Enables the SFTP server.
+- **`dataDir`** – Defines the SFTP server's data directory.
+- **`authorizedKeys`** – A list of SSH keys allowed for authentication.
+- **`extraGroups`** – Additional groups assigned to the SFTP user.
 
-4. **Identity & SSH Options**
-   Override defaults like `identityFile` or `port`. The module appends any necessary SSHFS options automatically.
+### Example Configuration:
+```nix
+{
+  services.sftpServer = {
+    enable = true;
+    dataDir = "/mnt/sftp";
+    authorizedKeys = [
+      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC..."
+    ];
+  };
+}
+```
+
+## SFTP Client Module
+
+The client module allows you to mount remote directories locally using SSHFS, making remote filesystems accessible as if they were local. A key feature is the ability to bind specific subdirectories—such as `Documents`, `Pictures`, or `Downloads`—directly to the corresponding local paths, like your home directory.
+
+### Configuration Options:
+- **`enable`** – Enables the SFTP client.
+- **`defaults.identityFile`** – Path to the SSH identity file.
+- **`defaults.port`** – SSH port (default: `22`).
+- **`defaults.autoMount`** – Whether to mount automatically.
+- **`mounts`** – Defines remote directories to mount.
+- **`binds`** – Defines local bind mounts from remote directories.
+
+### Example Configuration:
+```nix
+{
+  services.sftpClient = {
+    enable = true;
+    defaults = {
+      identityFile = "/home/user/.ssh/id_ed25519";
+      port = 22;
+      autoMount = true;
+    };
+    mounts = [
+      {
+        what = "user@192.168.1.100:/";
+        where = "/mnt/remote-sftp";
+      }
+    ];
+    binds = [
+      {
+        what = "/mnt/remote-sftp/home/Pictures";
+        where = "/home/user/Pictures";
+      }
+    ];
+  };
+}
+```
+
+## Notes
+
+- The module ensures bind mounts occur only after the corresponding SFTP mount is available.
+- If `autoMount = false`, you can use the `sftp-mount` and `sftp-unmount` commands to mount manually. These are automatically added to `PATH`. This is useful if SSH keys are not available at boot.
+- You can override defaults like `identityFile` or `autoMount` separately under each mount entry.
+- Use a file manager such as [FX File Explorer](https://play.google.com/store/apps/details?id=nextapp.fx) or [Cx File Explorer](https://play.google.com/store/apps/details?id=com.cxinventor.file.explorer) to access the SFTP server via mobile.
+

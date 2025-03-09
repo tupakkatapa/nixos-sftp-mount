@@ -1,6 +1,6 @@
 { lib, pkgs, config, ... }:
 let
-  cfg = config.services.sftpMount;
+  cfg = config.services.sftpClient;
 
   # Base SSFS options
   sftpFsBaseOptions = [
@@ -23,10 +23,10 @@ let
           fsType = "sshfs";
           options =
             (if m.autoMount
-            then sftpFsBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
-            else sftpFsBaseOptions ++ [ "noauto" ]
+              then sftpFsBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
+              else sftpFsBaseOptions ++ [ "noauto" ]
             )
-            ++ [ "port=${m.port}" ]
+            ++ [ "port=${builtins.toString m.port}" ]
             ++ [ "IdentityFile=${m.identityFile}" ];
         };
       })
@@ -61,8 +61,8 @@ let
           fsType = "none";
           options =
             (if m.autoMount
-            then bindBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
-            else bindBaseOptions ++ [ "noauto" ]
+              then bindBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
+              else bindBaseOptions ++ [ "noauto" ]
             )
             # Systemd ordering
             ++ mkBindDependencies m;
@@ -71,8 +71,8 @@ let
       cfg.binds);
 in
 {
-  options.services.sftpMount = {
-    enable = lib.mkEnableOption "Enable SFTP mount.";
+  options.services.sftpClient = {
+    enable = lib.mkEnableOption "Whether to enable the SFTP client";
 
     defaults = {
       identityFile = lib.mkOption {
@@ -82,15 +82,17 @@ in
       };
 
       port = lib.mkOption {
-        type = lib.types.str;
-        default = "22";
+        type = lib.types.int;
+        default = 22;
         description = "Default SFTP port.";
       };
 
       autoMount = lib.mkOption {
         type = lib.types.bool;
         default = true;
-        description = "If true, it is auto-mounted via systemd; otherwise, run `sftp-mount` manually. The script is available in `$PATH`.";
+        description = ''
+          If true, it is auto-mounted via systemd; otherwise, run 'sftp-mount' manually.
+        '';
       };
     };
 
@@ -103,14 +105,16 @@ in
             description = "SSH identity file for the mount.";
           };
           port = lib.mkOption {
-            type = lib.types.str;
+            type = lib.types.int;
             default = cfg.defaults.port;
             description = "Port for SFTP.";
           };
           autoMount = lib.mkOption {
             type = lib.types.bool;
             default = cfg.defaults.autoMount;
-            description = "If true, it is auto-mounted via systemd; otherwise, run `sftp-mount` manually. The script is available in `$PATH`.";
+            description = ''
+              If true, it is auto-mounted via systemd; otherwise, run 'sftp-mount' manually.
+            '';
           };
           what = lib.mkOption {
             type = lib.types.str;
@@ -140,7 +144,9 @@ in
           autoMount = lib.mkOption {
             type = lib.types.bool;
             default = cfg.defaults.autoMount;
-            description = "If true, it is auto-mounted via systemd; otherwise, run `sftp-mount` manually. The script is available in `$PATH`.";
+            description = ''
+              If true, it is auto-mounted via systemd; otherwise, run `sftp-mount` manually.
+            '';
           };
         };
       });
@@ -244,4 +250,3 @@ in
         '');
   };
 }
-
