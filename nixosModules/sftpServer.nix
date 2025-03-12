@@ -46,7 +46,7 @@ in
       useDefaultShell = false;
       group = "sftp";
       extraGroups = [ "sshd" ] ++ cfg.extraGroups;
-      home = cfg.home;
+      home = cfg.dataDir;
       homeMode = "770";
       openssh.authorizedKeys.keys = cfg.authorizedKeys;
     };
