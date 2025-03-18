@@ -41,16 +41,19 @@ in
     };
 
     users.users."sftp" = {
-      createHome = true;
       isSystemUser = true;
       useDefaultShell = false;
       group = "sftp";
       extraGroups = [ "sshd" ] ++ cfg.extraGroups;
       home = cfg.dataDir;
-      homeMode = "770";
       openssh.authorizedKeys.keys = cfg.authorizedKeys;
     };
     users.groups."sftp" = { };
+
+    # The chroot directory must be owned by root
+    systemd.tmpfiles.rules = [
+      "d ${cfg.dataDir} 0755 root root - -"
+    ];
   };
 }
 
