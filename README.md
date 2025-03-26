@@ -10,7 +10,7 @@ Add this repository as a Nix flake input, then enable either the `sftpServer` or
 ```nix
 {
   inputs = {
-    sftp-mount.url = "github:tupakkatapa/sftp-mount";
+    sftp-mount.url = "github:tupakkatapa/nixos-sftp-mount";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
