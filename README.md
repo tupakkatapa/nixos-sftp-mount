@@ -1,5 +1,5 @@
 
-# SFTP-Mount
+# NixOS SFTP Mount
 
 A couple of straightforward NixOS modules that lets you set up an SFTP server or mount remote directories. This simple approach ensures your data is always in one central location and seamlessly accessible on any device. For more context, see my blog post: [Home Directory at SFTP Server](https://blog.coditon.com/content/posts/Home%20Directory%20at%20SFTP%20Server.md).
 
