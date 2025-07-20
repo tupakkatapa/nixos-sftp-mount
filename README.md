@@ -1,5 +1,5 @@
 
-# nixos-sftp-mount
+# NixOS SFTP Mount
 
 A pair of complementary NixOS modules that let you set up an SFTP server or mount remote directories. The client module includes a bind mount functionality, allowing you to map remote subdirectories directly to local paths. This approach ensures your data is always in one central location and seamlessly accessible on any device.
 
