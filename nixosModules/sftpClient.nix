@@ -183,7 +183,7 @@ in
 
     # Scripts for mounting and unmounting
     environment.systemPackages = lib.optional
-      ((cfg.mounts != [ ] || cfg.binds != [ ]) && (!cfg.defaults.autoMount))
+      (cfg.mounts != [ ] || cfg.binds != [ ])
       (pkgs.runCommand "sftp-utils" { }
         ''
               mkdir -p $out/bin
