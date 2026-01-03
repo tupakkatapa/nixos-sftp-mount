@@ -2,6 +2,17 @@
 let
   cfg = config.services.sftpClient;
 
+  # Type that accepts either a string or list of strings
+  identityFileType = lib.types.either lib.types.str (lib.types.listOf lib.types.str);
+
+  # Normalize to list
+  toList = x: if builtins.isList x then x else if x == "" then [] else [ x ];
+
+  # Resolve identity files for a mount
+  resolveIdentityFiles = m:
+    let files = toList m.identityFile;
+    in if files != [] then files else toList cfg.defaults.identityFile;
+
   # Base SSFS options
   sftpFsBaseOptions = [
     "nodev"
@@ -27,7 +38,7 @@ let
               else sftpFsBaseOptions ++ [ "noauto" ]
             )
             ++ [ "port=${builtins.toString m.port}" ]
-            ++ [ "IdentityFile=${m.identityFile}" ];
+            ++ map (f: "IdentityFile=${f}") (resolveIdentityFiles m);
         };
       })
       cfg.mounts);
@@ -76,9 +87,9 @@ in
 
     defaults = {
       identityFile = lib.mkOption {
-        type = lib.types.str;
+        type = identityFileType;
         default = "";
-        description = "Default SSH identity file.";
+        description = "Default SSH identity file(s). String or list of strings.";
       };
 
       port = lib.mkOption {
@@ -100,9 +111,9 @@ in
       type = lib.types.listOf (lib.types.submodule {
         options = {
           identityFile = lib.mkOption {
-            type = lib.types.str;
-            default = cfg.defaults.identityFile;
-            description = "SSH identity file for the mount.";
+            type = identityFileType;
+            default = "";
+            description = "SSH identity file(s) for the mount. String or list of strings.";
           };
           port = lib.mkOption {
             type = lib.types.int;
@@ -195,20 +206,18 @@ in
 
           echo "Mounting SFTP filesystems..."
 
-          for info in ${lib.concatStringsSep " " (map (m:
-            "${lib.escapeShellArg m.where}=${lib.escapeShellArg m.identityFile}"
-          ) cfg.mounts)}; do
-
-            path=\$(expr "\$info" : '\([^=]*\)')
-            ident=\$(expr "\$info" : '[^=]*=\(.*\)')
-
-            if [ -n "\$ident" ] && [ ! -f "\$ident" ]; then
-              echo "WARNING: Identity file '\$ident' does not exist."
-            fi
-
-            echo " -> Mounting \$path"
-            mount "\$path"
-          done
+          ${lib.concatMapStringsSep "\n" (m:
+            let files = resolveIdentityFiles m;
+            in lib.concatStringsSep "\n" (
+              (map (f: ''
+          if [ ! -f "${f}" ]; then
+            echo "WARNING: Identity file '${f}' does not exist."
+          fi'') files)
+              ++ [''
+          echo " -> Mounting ${m.where}"
+          mount "${m.where}"'']
+            )
+          ) cfg.mounts}
 
           echo
           echo "Mounting bind filesystems..."
