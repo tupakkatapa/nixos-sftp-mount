@@ -6,12 +6,12 @@ let
   identityFileType = lib.types.either lib.types.str (lib.types.listOf lib.types.str);
 
   # Normalize to list
-  toList = x: if builtins.isList x then x else if x == "" then [] else [ x ];
+  toList = x: if builtins.isList x then x else if x == "" then [ ] else [ x ];
 
   # Resolve identity files for a mount
   resolveIdentityFiles = m:
     let files = toList m.identityFile;
-    in if files != [] then files else toList cfg.defaults.identityFile;
+    in if files != [ ] then files else toList cfg.defaults.identityFile;
 
   # Base SSFS options
   sftpFsBaseOptions = [
@@ -34,8 +34,8 @@ let
           fsType = "sshfs";
           options =
             (if m.autoMount
-              then sftpFsBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
-              else sftpFsBaseOptions ++ [ "noauto" ]
+            then sftpFsBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
+            else sftpFsBaseOptions ++ [ "noauto" ]
             )
             ++ [ "port=${builtins.toString m.port}" ]
             ++ map (f: "IdentityFile=${f}") (resolveIdentityFiles m);
@@ -72,8 +72,8 @@ let
           fsType = "none";
           options =
             (if m.autoMount
-              then bindBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
-              else bindBaseOptions ++ [ "noauto" ]
+            then bindBaseOptions ++ [ "x-systemd.automount" "x-systemd.idle-timeout=600" ]
+            else bindBaseOptions ++ [ "noauto" ]
             )
             # Systemd ordering
             ++ mkBindDependencies m;
