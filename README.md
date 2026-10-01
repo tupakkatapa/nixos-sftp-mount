@@ -1,4 +1,10 @@
 
+⚠️ **Do not use this. The `binds` setup wiped whole directories, root cause still unknown.**
+
+**Use a plain `fileSystems` entry with `fsType = "sshfs"` instead, like in [my config](https://github.com/tupakkatapa/nix-config/blob/main/nixosConfigurations/torgue/persistence.nix).**
+
+---
+
 # NixOS SFTP Mount
 
 A pair of complementary NixOS modules that let you set up an SFTP server or mount remote directories. The client module includes a bind mount functionality, allowing you to map remote subdirectories directly to local paths. This approach ensures your data is always in one central location and seamlessly accessible on any device.
